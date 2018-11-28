@@ -24,7 +24,7 @@
 
 package com.smartral.inappbilling.utils.io;
 
-import inappbilling.utils.ui.events.ActionListener;
+import com.smartral.inappbilling.utils.ui.events.ActionListener;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
@@ -199,7 +199,7 @@ public class Util {
     /**
      * <p>Registers this externalizable so readObject will be able to load such objects.</p>
      * <p>
-     * The sample below demonstrates the usage and registration of the {@link inappbilling.utils.io.Externalizable} interface:
+     * The sample below demonstrates the usage and registration of the {@link com.smartral.inappbilling.utils.io.Externalizable} interface:
      * </p>
      * <script src="https://gist.github.com/codenameone/858d8634e3cf1a82a1eb.js"></script>
      *
@@ -214,7 +214,7 @@ public class Util {
      * <p>Registers this externalizable so readObject will be able to load such objects.</p>
      *
      * <p>
-     * The sample below demonstrates the usage and registration of the {@link inappbilling.utils.io.Externalizable} interface:
+     * The sample below demonstrates the usage and registration of the {@link com.smartral.inappbilling.utils.io.Externalizable} interface:
      * </p>
      * <script src="https://gist.github.com/codenameone/858d8634e3cf1a82a1eb.js"></script>
      *
@@ -230,7 +230,7 @@ public class Util {
      * the supported types.</p>
      * 
      * <p>
-     * The sample below demonstrates the usage and registration of the {@link inappbilling.utils.io.Externalizable} interface:
+     * The sample below demonstrates the usage and registration of the {@link com.smartral.inappbilling.utils.io.Externalizable} interface:
      * </p>
      * <script src="https://gist.github.com/codenameone/858d8634e3cf1a82a1eb.js"></script>
      *
@@ -441,7 +441,7 @@ public class Util {
      * {@link #writeObject(Object, DataOutputStream)}.</p>
      *
      * <p>
-     * The sample below demonstrates the usage and registration of the {@link inappbilling.utils.io.Externalizable} interface:
+     * The sample below demonstrates the usage and registration of the {@link com.smartral.inappbilling.utils.io.Externalizable} interface:
      * </p>
      * <script src="https://gist.github.com/codenameone/858d8634e3cf1a82a1eb.js"></script>
      *
@@ -1107,7 +1107,7 @@ public class Util {
     /**
      * <p>Non-blocking method that will download the given URL to storage in the background and return 
      * immediately. This method can be used to fetch data dynamically and asynchronously e.g. in this code it is used
-     * to fetch book covers for the {@link com.codename1.components.ImageViewer}:</p>
+     * to fetch book covers for the {@link com.smartral.inappbilling.utils.components.ImageViewer}:</p>
      * 
      * <script src="https://gist.github.com/codenameone/305c3f5426b0e2e80833.js"></script>
      * <img src="https://www.codenameone.com/img/developer-guide/components-imageviewer-dynamic.png" alt="Image viewer with dynamic URL fetching model" />

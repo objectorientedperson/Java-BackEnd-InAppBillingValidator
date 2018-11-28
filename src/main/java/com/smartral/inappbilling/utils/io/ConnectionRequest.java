@@ -1234,7 +1234,7 @@ public class ConnectionRequest {
 //                    Storage.getInstance().deleteStorageFile(destinationStorage);
 //                }
 //            } else {
-                data = inappbilling.utils.io.Util.readInputStream(input);
+                data = com.smartral.inappbilling.utils.io.Util.readInputStream(input);
 //            }
 //        }
         if(hasResponseListeners() && !isKilled()) {
