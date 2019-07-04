@@ -111,6 +111,23 @@ public class Receipt implements Externalizable {
     private String originalTransactionId;
     private String packageName;
 
+    private String productId;
+    private String purchaseToken;
+    private Integer acknowledgementState;
+    private Long priceAmountMicros;
+    private String orderId;
+    private String kind;
+    private Integer cancelReason;
+    private String countryCode;
+    private Integer paymentState;
+    private Integer purchaseType;
+    private String priceCurrencyCode;
+    private Long startTimeMillis;
+    private Long expiryTimeMillis;
+    private String developerPayload;
+    private Long userCancellationTimeMillis;
+    private Boolean autoRenewing;
+    private Long startTime;
 
     public Receipt() {
 
@@ -395,6 +412,142 @@ public class Receipt implements Externalizable {
         this.packageName = packageName;
     }
 
+    public String getProductId() {
+        return productId;
+    }
+
+    public void setProductId(String productId) {
+        this.productId = productId;
+    }
+
+    public String getPurchaseToken() {
+        return purchaseToken;
+    }
+
+    public void setPurchaseToken(String purchaseToken) {
+        this.purchaseToken = purchaseToken;
+    }
+
+    public Integer getAcknowledgementState() {
+        return acknowledgementState;
+    }
+
+    public void setAcknowledgementState(Integer acknowledgementState) {
+        this.acknowledgementState = acknowledgementState;
+    }
+
+    public Long getPriceAmountMicros() {
+        return priceAmountMicros;
+    }
+
+    public void setPriceAmountMicros(Long priceAmountMicros) {
+        this.priceAmountMicros = priceAmountMicros;
+    }
+
+    public String getOrderId() {
+        return orderId;
+    }
+
+    public void setOrderId(String orderId) {
+        this.orderId = orderId;
+    }
+
+    public String getKind() {
+        return kind;
+    }
+
+    public void setKind(String kind) {
+        this.kind = kind;
+    }
+
+    public Integer getCancelReason() {
+        return cancelReason;
+    }
+
+    public void setCancelReason(Integer cancelReason) {
+        this.cancelReason = cancelReason;
+    }
+
+    public String getCountryCode() {
+        return countryCode;
+    }
+
+    public void setCountryCode(String countryCode) {
+        this.countryCode = countryCode;
+    }
+
+    public Integer getPaymentState() {
+        return paymentState;
+    }
+
+    public void setPaymentState(Integer paymentState) {
+        this.paymentState = paymentState;
+    }
+
+    public Integer getPurchaseType() {
+        return purchaseType;
+    }
+
+    public void setPurchaseType(Integer purchaseType) {
+        this.purchaseType = purchaseType;
+    }
+
+    public String getPriceCurrencyCode() {
+        return priceCurrencyCode;
+    }
+
+    public void setPriceCurrencyCode(String priceCurrencyCode) {
+        this.priceCurrencyCode = priceCurrencyCode;
+    }
+
+    public Long getStartTimeMillis() {
+        return startTimeMillis;
+    }
+
+    public void setStartTimeMillis(Long startTimeMillis) {
+        this.startTimeMillis = startTimeMillis;
+    }
+
+    public Long getExpiryTimeMillis() {
+        return expiryTimeMillis;
+    }
+
+    public void setExpiryTimeMillis(Long expiryTimeMillis) {
+        this.expiryTimeMillis = expiryTimeMillis;
+    }
+
+    public String getDeveloperPayload() {
+        return developerPayload;
+    }
+
+    public void setDeveloperPayload(String developerPayload) {
+        this.developerPayload = developerPayload;
+    }
+
+    public Long getUserCancellationTimeMillis() {
+        return userCancellationTimeMillis;
+    }
+
+    public void setUserCancellationTimeMillis(Long userCancellationTimeMillis) {
+        this.userCancellationTimeMillis = userCancellationTimeMillis;
+    }
+
+    public Boolean getAutoRenewing() {
+        return autoRenewing;
+    }
+
+    public void setAutoRenewing(Boolean autoRenewing) {
+        this.autoRenewing = autoRenewing;
+    }
+
+    public Long getStartTime() {
+        return startTime;
+    }
+
+    public void setStartTime(Long startTime) {
+        this.startTime = startTime;
+    }
+
     @Override
     public String toString() {
         return "Receipt{" +
@@ -409,6 +562,23 @@ public class Receipt implements Externalizable {
                 ", internalId='" + internalId + '\'' +
                 ", originalTransactionId='" + originalTransactionId + '\'' +
                 ", packageName='" + packageName + '\'' +
+                ", productId='" + productId + '\'' +
+                ", purchaseToken='" + purchaseToken + '\'' +
+                ", acknowledgementState=" + acknowledgementState +
+                ", priceAmountMicros=" + priceAmountMicros +
+                ", orderId='" + orderId + '\'' +
+                ", kind='" + kind + '\'' +
+                ", cancelReason=" + cancelReason +
+                ", countryCode='" + countryCode + '\'' +
+                ", paymentState=" + paymentState +
+                ", purchaseType=" + purchaseType +
+                ", priceCurrencyCode='" + priceCurrencyCode + '\'' +
+                ", startTimeMillis=" + startTimeMillis +
+                ", expiryTimeMillis=" + expiryTimeMillis +
+                ", developerPayload='" + developerPayload + '\'' +
+                ", userCancellationTimeMillis=" + userCancellationTimeMillis +
+                ", autoRenewing=" + autoRenewing +
+                ", startTime=" + startTime +
                 '}';
     }
 }

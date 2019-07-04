@@ -13,6 +13,7 @@ import com.smartral.inappbilling.utils.ui.events.ActionEvent;
 import com.smartral.inappbilling.utils.ui.events.ActionListener;
 import com.smartral.inappbilling.utils.util.Base64;
 import com.smartral.inappbilling.utils.util.Callback;
+
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
@@ -36,7 +37,6 @@ import org.bouncycastle.crypto.params.RSAKeyParameters;
 import org.bouncycastle.crypto.signers.RSADigestSigner;
 
 /**
- *
  * @author shannah
  */
 public class GooglePlayValidator extends IAPValidator {
@@ -66,7 +66,7 @@ public class GooglePlayValidator extends IAPValidator {
         out.setQuantity(receipt.getQuantity());
         validatePurchase(receiptData, signature, new Callback<SubscriptionData>() {
             @Override
-            public void onSucess(SubscriptionData t) {
+            public void onSuccess(SubscriptionData t) {
                 if (t.expirationTime > 0) {
                     out.setExpiryDate(new Date(t.expirationTime));
                 }
@@ -79,11 +79,12 @@ public class GooglePlayValidator extends IAPValidator {
                 if (t.packageName != null) {
                     out.setPackageName(t.packageName);
                 }
+                setReceiptData(out, t);
             }
 
             @Override
             public void onError(Object o, Throwable thrwbl, int i, String string) {
-                Logger.getLogger(getClass().getSimpleName()).log(Level.INFO,"ERROR_GOOGLE_VALIDATION" + thrwbl.getLocalizedMessage());
+                Logger.getLogger(getClass().getSimpleName()).log(Level.INFO, "ERROR_GOOGLE_VALIDATION" + thrwbl.getLocalizedMessage());
             }
 
         }, isSubs);
@@ -93,25 +94,44 @@ public class GooglePlayValidator extends IAPValidator {
     /**
      * Structure to hold subscription data that we load.
      */
-    private class SubscriptionData {
+    public class SubscriptionData {
 
         String packageName;
         String productId;
         String purchaseToken;
+
+        Integer acknowledgementState;
+        long priceAmountMicros;
+        String orderId;
+        String kind;
+        Integer cancelReason;
+
+        String countryCode;
+        Integer paymentState;
+        Integer purchaseType;
+
+        String priceCurrencyCode;
+        long startTimeMillis;
+        long expiryTimeMillis;
+        String developerPayload;
+
+        long userCancellationTimeMillis;
+
         boolean autoRenewing;
         long expirationTime;
         long startTime;
 
-        public String toString() {
-            return "SubscriptionData {packageName: " + packageName + ", productId: " + productId + ", purchaseToken: " + purchaseToken + "}";
-        }
+        CancelSurveyResult cancelSurveyResult;
+    }
+
+    public class CancelSurveyResult {
+        Integer cancelSurveyReason;
     }
 
     /**
      * Structure to keep track of request state in HTTP requests.
      */
     private class RequestState {
-
         int status;
         String message;
     }
@@ -120,38 +140,27 @@ public class GooglePlayValidator extends IAPValidator {
      *
      */
     private class GoogleTokenMap {
-
         String accessToken;
         private Object clientID;
         private Object clientSecret;
         private Object refreshToken;
     }
 
-    // receipt is an object
-    /*
-    * receipt = { data: 'stringified receipt data', signature: 'receipt signature' };
-    * if receipt.data is an object, it silently stringifies it
+    /**
+     * receipt = { data: 'stringified receipt data', signature: 'receipt signature' };
+     * if receipt.data is an object, it silently stringifies it
      */
     private void validatePurchase(String receiptData, String signature, Callback<SubscriptionData> cb, boolean isSubs) {
         Result res = Result.fromContent(receiptData, "json");
-        SubscriptionData data = new SubscriptionData();
+        SubscriptionData data = setParsedData(res);
         if (res.get("packageName") == null) {
             cb.onError(this, new RuntimeException("Receipt data is missing package name. : " + receiptData), 500, "Receipt data is missing package name: " + receiptData);
             return;
         }
-        data.packageName = res.getAsString("packageName");
-        data.purchaseToken = res.getAsString("purchaseToken");
-        data.autoRenewing = res.getAsBoolean("autoRenewing");
-        data.startTime = res.getAsLong("purchaseTime");
-        data.productId = res.getAsString("productId");
-        if (data.packageName == null) {
-            
-        }
         checkSubscriptionStatus(data, cb, isSubs);
-    };
-    
-    
-    private void checkSubscriptionStatus(final SubscriptionData data, final Callback<SubscriptionData> cb, boolean isSubs) {
+    }
+
+    private void checkSubscriptionStatus(SubscriptionData data, final Callback<SubscriptionData> cb, boolean isSubs) {
         String packageName = data.packageName;
         String subscriptionID = data.productId;
         String purchaseToken = data.purchaseToken;
@@ -161,8 +170,8 @@ public class GooglePlayValidator extends IAPValidator {
             return;
         }
 
-        final String url = "https://www.googleapis.com/androidpublisher/v2/applications/" + packageName
-                + "/purchases/" + (isSubs ? "subscriptions" : "products") + "/" + subscriptionID + "/tokens/" + purchaseToken;
+        final String url = String.format("https://www.googleapis.com/androidpublisher/v3/applications/%s/purchases/%s/%s/tokens/%s",
+                packageName, isSubs ? "subscriptions" : "products", subscriptionID, purchaseToken);
         final RequestState state = new RequestState();
 
         if (googleTokenMap.accessToken == null) {
@@ -171,14 +180,9 @@ public class GooglePlayValidator extends IAPValidator {
             state.message = "No access token yet";
         } else {
             getSubscriptionInfo(url, new Callback<Result>() {
-
                 @Override
-                public void onSucess(Result body) {
-                    data.autoRenewing = body.getAsBoolean("autoRenewing");
-                    data.expirationTime = body.getAsLong("expiryTimeMillis");
-                    data.startTime = body.getAsLong("startTimeMillis");
-                    state.status = STATUS_VALIDATION_SUCCESS;
-
+                public void onSuccess(Result body) {
+                    setParsedData(body, data, state, packageName, subscriptionID, purchaseToken);
                 }
 
                 @Override
@@ -193,9 +197,8 @@ public class GooglePlayValidator extends IAPValidator {
         if (state.status == STATUS_VALIDATION_FAILURE) {
             // Try to refresh the google token
             refreshGoogleTokens(new Callback<Result>() {
-
                 @Override
-                public void onSucess(Result parsedBody) {
+                public void onSuccess(Result parsedBody) {
                     if (parsedBody.get("error") != null) {
                         state.status = STATUS_VALIDATION_FAILURE;
                         state.message = parsedBody.getAsString("error");
@@ -212,31 +215,15 @@ public class GooglePlayValidator extends IAPValidator {
                 }
 
             });
-
             if (state.status == STATUS_VALIDATION_SUCCESS) {
                 getSubscriptionInfo(url, new Callback<Result>() {
-
                     @Override
-                    public void onSucess(Result parsedBody) {
+                    public void onSuccess(Result parsedBody) {
                         if (parsedBody.get("error") != null) {
-                            try {
-                            } catch (Exception ex) {
-                                throw new RuntimeException(ex);
-                            }
                             state.status = STATUS_VALIDATION_FAILURE;
                             state.message = parsedBody.getAsString("error");
-                            //cb.onError(this, new IOException(state.message), 500, state.message);
-                            //return;
                         } else {
-
-                            data.autoRenewing = parsedBody.getAsBoolean("autoRenewing");
-                            data.expirationTime = parsedBody.getAsLong("expiryTimeMillis");
-                            data.startTime = parsedBody.getAsLong("startTimeMillis");
-
-                            state.status = STATUS_VALIDATION_SUCCESS;
-                            //googleTokenMap.accessToken =  parsedBody.getAsString(KEYS_CLIENT_ID);
-                            state.status = STATUS_VALIDATION_SUCCESS;
-
+                            setParsedData(parsedBody, data, state, packageName, subscriptionID, purchaseToken);
                         }
                     }
 
@@ -250,7 +237,7 @@ public class GooglePlayValidator extends IAPValidator {
         }
 
         if (state.status == STATUS_VALIDATION_SUCCESS) {
-            cb.onSucess(data);
+            cb.onSuccess(data);
         } else {
             cb.onError(cb, new IOException(state.message), state.status, state.message);
         }
@@ -356,7 +343,7 @@ public class GooglePlayValidator extends IAPValidator {
                 try {
                     if (req.getResponseCode() >= 200 && req.getResponseCode() < 300) {
                         Result res = Result.fromContent(new String(req.getResponseData(), "UTF-8"), "json");
-                        cb.onSucess(res);
+                        cb.onSuccess(res);
                     } else {
                         cb.onError(this, new RuntimeException("Failed to get subscription info: response code " + req.getResponseCode()), req.getResponseCode(), "Failed to get subscription info: response code " + req.getResponseCode());
                     }
@@ -388,21 +375,144 @@ public class GooglePlayValidator extends IAPValidator {
             public void actionPerformed(NetworkEvent evt) {
                 try {
                     if (req.getResponseCode() >= 200 && req.getResponseCode() < 300) {
-                        cb.onSucess(Result.fromContent(new String(req.getResponseData(), "UTF-8"), "json"));
+                        cb.onSuccess(Result.fromContent(new String(req.getResponseData(), "UTF-8"), "json"));
                     } else {
-                        try {
-                        } catch (Exception ex2) {
-                        }
                         cb.onError(this, new IOException("Failed to refresh token:  Response code " + req.getResponseCode()), req.getResponseCode(), "Failed to refresh token.  Response code " + req.getResponseCode());
                     }
                 } catch (UnsupportedEncodingException | IllegalArgumentException ex) {
-                    try {
-                    } catch (Exception ex2) {
-                    }
                     cb.onError(this, ex, req.getResponseCode(), ex.getMessage());
                 }
             }
         });
         req.addToQueueAndWait();
+    }
+
+    /**
+     * String packageName;
+     * String productId;
+     * String purchaseToken;
+     * <p>
+     * Integer acknowledgementState;
+     * String priceAmountMicros;
+     * String orderId;
+     * String kind;
+     * Integer cancelReason;
+     * <p>
+     * String countryCode;
+     * Integer paymentState;
+     * Integer purchaseType;
+     * <p>
+     * String priceCurrencyCode;
+     * String startTimeMillis;
+     * String expiryTimeMillis;
+     * String developerPayload;
+     * <p>
+     * long userCancellationTimeMillis;
+     * <p>
+     * boolean autoRenewing;
+     * long expirationTime;
+     * long startTime;
+     * <p>
+     * CancelSurveyResult cancelSurveyResult;
+     *
+     * @param result
+     * @return
+     */
+    private SubscriptionData setParsedData(Result result) {
+        SubscriptionData data = new SubscriptionData();
+        data.packageName = result.getAsString("packageName");
+        data.productId = result.getAsString("productId");
+        data.purchaseToken = result.getAsString("purchaseToken");
+
+        data.acknowledgementState = result.getAsInteger("acknowledgementState");
+        data.priceAmountMicros = result.getAsLong("priceAmountMicros");
+        data.orderId = result.getAsString("orderId");
+        data.kind = result.getAsString("kind");
+        data.cancelReason = result.getAsInteger("cancelReason");
+
+        data.countryCode = result.getAsString("countryCode");
+        data.paymentState = result.getAsInteger("paymentState");
+        data.purchaseType = result.getAsInteger("purchaseType");
+
+        data.priceCurrencyCode = result.getAsString("priceCurrencyCode");
+        data.startTimeMillis = result.getAsLong("startTimeMillis");
+        data.expiryTimeMillis = result.getAsLong("expiryTimeMillis");
+        data.developerPayload = result.getAsString("developerPayload");
+        data.userCancellationTimeMillis = result.getAsLong("userCancellationTimeMillis");
+
+        data.autoRenewing = result.getAsBoolean("autoRenewing");
+        data.expirationTime = result.getAsLong("expiryTimeMillis");
+        data.startTime = result.getAsLong("startTimeMillis");
+        return data;
+    }
+
+    private void setParsedData(Result parsedBody, SubscriptionData data, RequestState state,
+                               String packageName, String subscriptionID, String purchaseToken) {
+        data.packageName = packageName;
+        data.productId = subscriptionID;
+        data.purchaseToken = purchaseToken;
+
+        data.acknowledgementState = parsedBody.getAsInteger("acknowledgementState");
+        data.priceAmountMicros = parsedBody.getAsLong("priceAmountMicros");
+        data.orderId = parsedBody.getAsString("orderId");
+        data.kind = parsedBody.getAsString("kind");
+        data.cancelReason = parsedBody.getAsInteger("cancelReason");
+
+        data.countryCode = parsedBody.getAsString("countryCode");
+        data.paymentState = parsedBody.getAsInteger("paymentState");
+        data.purchaseType = parsedBody.getAsInteger("purchaseType");
+
+        data.priceCurrencyCode = parsedBody.getAsString("priceCurrencyCode");
+        data.startTimeMillis = parsedBody.getAsLong("startTimeMillis");
+        data.expiryTimeMillis = parsedBody.getAsLong("expiryTimeMillis");
+        data.developerPayload = parsedBody.getAsString("developerPayload");
+        data.userCancellationTimeMillis = parsedBody.getAsLong("userCancellationTimeMillis");
+
+        data.autoRenewing = parsedBody.getAsBoolean("autoRenewing");
+        data.expirationTime = parsedBody.getAsLong("expiryTimeMillis");
+        data.startTime = parsedBody.getAsLong("startTimeMillis");
+
+        state.status = STATUS_VALIDATION_SUCCESS;
+    }
+
+    /**
+     * private String productId;
+     private String purchaseToken;
+     private Integer acknowledgementState;
+     private Long priceAmountMicros;
+     private String orderId;
+     private String kind;
+     private Integer cancelReason;
+     private String countryCode;
+     private Integer paymentState;
+     private Integer purchaseType;
+     private String priceCurrencyCode;
+     private Long startTimeMillis;
+     private Long expiryTimeMillis;
+     private String developerPayload;
+     private Long userCancellationTimeMillis;
+     private Boolean autoRenewing;
+     private Long startTime;
+
+     * @return
+     */
+    private void setReceiptData(Receipt out, SubscriptionData t) {
+        out.setProductId(t.productId);
+        out.setPurchaseToken(t.purchaseToken);
+        out.setAcknowledgementState(t.acknowledgementState);
+        out.setPriceAmountMicros(t.priceAmountMicros);
+        out.setOrderId(t.orderId);
+        out.setKind(t.kind);
+        out.setCancelReason(t.cancelReason);
+        out.setCountryCode(t.countryCode);
+        out.setPaymentState(t.paymentState);
+        out.setPurchaseType(t.purchaseType);
+        out.setPriceCurrencyCode(t.priceCurrencyCode);
+        out.setStartTimeMillis(t.startTimeMillis);
+        out.setExpiryTimeMillis(t.expiryTimeMillis);
+        out.setDeveloperPayload(t.developerPayload);
+        out.setUserCancellationTimeMillis(t.userCancellationTimeMillis);
+        out.setAutoRenewing(t.autoRenewing);
+        out.setStartTime(t.startTime);
     }
 }

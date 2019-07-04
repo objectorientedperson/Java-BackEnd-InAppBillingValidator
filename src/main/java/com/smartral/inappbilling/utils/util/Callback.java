@@ -34,7 +34,7 @@ public interface Callback<T> {
      * Invoked when the async method returns with a successful value
      * @param value the value
      */
-    public void onSucess(T value);
+    void onSuccess(T value);
     
     /**
      * Invoked when the async method throws an exception
@@ -43,5 +43,5 @@ public interface Callback<T> {
      * @param errorCode if applicable e.g. with http error codes, -1 for unknown
      * @param errorMessage if applicable a user displayable message (can be null)
      */
-    public void onError(Object sender, Throwable err, int errorCode, String errorMessage);
+    void onError(Object sender, Throwable err, int errorCode, String errorMessage);
 }

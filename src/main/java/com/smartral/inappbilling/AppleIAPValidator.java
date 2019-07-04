@@ -73,7 +73,7 @@ public class AppleIAPValidator extends IAPValidator {
         validatePurchase(getAppleSecret(), receipt.getOrderData(), new Callback<Response>() {
 
             @Override
-            public void onSucess(Response t) {
+            public void onSuccess(Response t) {
                 Receipt[] receipts = t.getReceipts(false);
                 List<Receipt> out = new ArrayList<>();
 
@@ -201,7 +201,7 @@ public class AppleIAPValidator extends IAPValidator {
                     applyResponseData(validatedData, res);
 
                     validatedData.isValidated = true;
-                    response.onSucess(validatedData);
+                    response.onSuccess(validatedData);
                 } catch (Throwable ex) {
                     if (!isSandboxUrl) {
                         validatedData.isValidated = false;
