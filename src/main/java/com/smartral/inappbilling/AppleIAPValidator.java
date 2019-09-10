@@ -262,6 +262,7 @@ public class AppleIAPValidator extends IAPValidator {
                     Result item = Result.fromContent((Map) aList);
                     String tid = item.getAsString("original_transaction_id");
                     long pdate = item.getAsLong("purchase_date_ms");
+                    boolean autoRenew = item.getAsInteger("auto_renew_status") == 1;
                     Long exp = getSubscriptionExpireDate(item);
                     int index = data.size();
 
@@ -280,6 +281,7 @@ public class AppleIAPValidator extends IAPValidator {
                     pd.setSku(item.getAsString("product_id"));
                     pd.setPurchaseDate(new Date(pdate));
                     pd.setPackageName(item.getAsString("package_name"));
+                    pd.setAutoRenewing(autoRenew);
                     if (item.get("cancellation_date") != null) {
                         pd.setCancellationDate(new Date(item.getAsLong("cancellation_date")));
                     }
