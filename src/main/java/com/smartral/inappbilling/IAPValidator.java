@@ -19,13 +19,13 @@ public abstract class IAPValidator {
     private String googleClientId;
     private String googlePrivateKey;
 
-    public static IAPValidator getValidatorForPlatform(String storeCode, boolean isSandBox) {
+    public static IAPValidator getValidatorForPlatform(String storeCode, boolean isSandBox, boolean isExcludeOldReceipts) {
         if (null == storeCode) {
             return null;
         }
         switch (storeCode) {
             case Receipt.STORE_CODE_ITUNES:
-                return new AppleIAPValidator(isSandBox);
+                return new AppleIAPValidator(isSandBox, isExcludeOldReceipts);
             case Receipt.STORE_CODE_PLAY:
                 return new GooglePlayValidator();
             default:

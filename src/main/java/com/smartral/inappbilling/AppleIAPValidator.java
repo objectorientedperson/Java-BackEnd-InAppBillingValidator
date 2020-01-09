@@ -30,6 +30,9 @@ public class AppleIAPValidator extends IAPValidator {
 
     private static final String prodPath = "https://" + liveHost + path;
     private static final String sandboxPath = "https://" + sandboxHost + path;
+
+    private static final String excludeOldTransactions = "exclude-old-transactions";
+
     /**
      * Error codes for IAP validation REST service
      */
@@ -45,8 +48,9 @@ public class AppleIAPValidator extends IAPValidator {
             2, "The receipt is valid, but purchased nothing."};
     Response validatedData;
 
-    public AppleIAPValidator(boolean isSandBox) {
+    public AppleIAPValidator(boolean isSandBox, boolean isExcludeOldTransactions) {
         this.isSandBox = isSandBox;
+        this.isExcludeOldTransactions = isExcludeOldTransactions;
     }
 
     private static Long getSubscriptionExpireDate(Result data) {
@@ -131,13 +135,16 @@ public class AppleIAPValidator extends IAPValidator {
 
     void validatePurchaseImpl(final String url, String secret, final String receipt, final Callback<Response> response) {
         final boolean isSandboxUrl = isSandBox; //url.equals(sandboxPath);
-        Map<String, String> content = new HashMap<>();
+        Map<String, Object> content = new HashMap<>();
         content.put("receipt-data", receipt);
         if (secret == null) {
             secret = System.getProperty("iap.applePassword", null);
         }
         if (secret != null) {
             content.put("password", secret);
+        }
+        if (isExcludeOldTransactions) {
+            content.put("exclude-old-transactions", true);
         }
 
         final Map fContent = content;
@@ -262,7 +269,16 @@ public class AppleIAPValidator extends IAPValidator {
                     Result item = Result.fromContent((Map) aList);
                     String tid = item.getAsString("original_transaction_id");
                     long pdate = item.getAsLong("purchase_date_ms");
-                    boolean autoRenew = item.getAsInteger("auto_renew_status") == 1;
+
+                    boolean autoRenew = false;
+                    if (item.getAsString("auto_renew_status") == null) {
+                        if (purchaseData.get("pending_renewal_info") != null) {
+                            autoRenew = ((LinkedHashMap<String, String>)purchaseData.get("pending_renewal_info")).get("auto_renew_status").equalsIgnoreCase("1");
+                        }
+                    } else {
+                        autoRenew = item.getAsInteger("auto_renew_status") == 1;
+                    }
+
                     Long exp = getSubscriptionExpireDate(item);
                     int index = data.size();
 
@@ -318,4 +334,5 @@ public class AppleIAPValidator extends IAPValidator {
     }
 
     private boolean isSandBox;
+    private boolean isExcludeOldTransactions;
 }

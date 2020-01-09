@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/inappbilling.iml" filepath="$PROJECT_DIR$/.idea/modules/inappbilling.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/inappbilling.iml" filepath="$PROJECT_DIR$/.idea/modules/inappbilling.iml" group="inappbilling" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/inappbilling_main.iml" filepath="$PROJECT_DIR$/.idea/modules/inappbilling_main.iml" group="inappbilling" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/inappbilling_test.iml" filepath="$PROJECT_DIR$/.idea/modules/inappbilling_test.iml" group="inappbilling" />
     </modules>
